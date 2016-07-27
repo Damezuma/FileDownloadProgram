@@ -35,7 +35,7 @@ void LoginDialog::OnClickTryLogin(wxCommandEvent & event)
 		}
 		else
 		{
-			wxMessageBox(msg, wxT("¿À·ù"));
+			wxMessageBox(msg, wxT("Error!"));
 		}
 	});
 	

@@ -3,7 +3,7 @@
 #include <wx/socket.h>
 #include <wx/sckaddr.h>
 ClientFileTransfer * ClientFileTransfer::s_instance = nullptr;
-const wxString SERVER_IP = wxT("127.0.0.1");
+const wxString SERVER_IP = wxT("piti.co.kr");
 ClientFileTransfer::~ClientFileTransfer()
 {
 	if (m_socket != nullptr)
@@ -14,11 +14,17 @@ ClientFileTransfer::~ClientFileTransfer()
 }
 void ClientFileTransfer::TryLogin(wxString id, wxString password, PasswordType passwordType, wxEvtHandler* eventHandler, const std::function<void(bool, wxString)> & handler)
 {
-	LoginThread * thread = new LoginThread(id, password, passwordType, eventHandler, handler);
+	ThreadLogin * thread = new ThreadLogin(id, password, passwordType, eventHandler, handler);
 	thread->Run();
 }
 
-ClientFileTransfer::LoginThread::LoginThread(const wxString & userId, const wxString & password, PasswordType passwordType, wxEvtHandler* eventHandler, const std::function<void(bool, wxString)> & handler)
+void ClientFileTransfer::TryGetTransferLogs(wxEvtHandler * eventHandler, const std::function<void(bool,  wxString msg, std::vector<wxString>)>& handler)
+{
+	ThreadGetLogTransferFiles * thread = new ThreadGetLogTransferFiles(eventHandler, handler);
+	thread->Run();
+}
+
+ClientFileTransfer::ThreadLogin::ThreadLogin(const wxString & userId, const wxString & password, PasswordType passwordType, wxEvtHandler* eventHandler, const std::function<void(bool, wxString)> & handler)
 {
 	m_id = userId;
 	m_shaBytes = new wxByte[64]{ 0 };
@@ -32,7 +38,7 @@ ClientFileTransfer::LoginThread::LoginThread(const wxString & userId, const wxSt
 	m_handler = handler;
 }
 
-void * ClientFileTransfer::LoginThread::Entry()
+void * ClientFileTransfer::ThreadLogin::Entry()
 {
 	bool res = false;
 	wxString msg;
@@ -58,27 +64,34 @@ void * ClientFileTransfer::LoginThread::Entry()
 			if (s.StartsWith(wxT("FTS")) == false)
 			{
 				msg = wxT("SERVER IS NOT OPENED!");
+				
 			}
 			else
 			{
 				auto a = "FTS00.01\n";
 				int sending_count = 0;
-				do {
+				do
+				{
 					if (socket->IsDisconnected())break;
 					sending_count += socket->Write(a + sending_count, 9 - sending_count).LastWriteCount();
-				} while (sending_count != 9);
+				}
+				while (sending_count != 9);
+
 				wxString hexSha;
 				for (int i = 0; i < 32; i++)
 				{
 					hexSha.Append(wxString::Format(wxT("%02X"), m_shaBytes[i]));
 				}
+
 				wxString loginCommand = wxString::Format(wxT("%s;%s;%d\n"), m_id, hexSha, (m_passwordType == PasswordType::UserPassword) ? 0 : 1);
 				auto c = loginCommand.ToUTF8();
 				socket->Write(c, c.length());
+
 				if (socket->IsDisconnected())
 				{
 					msg = wxT("SERVER IS DISCONNECTED!");
 				}
+
 				wxMemoryBuffer buf;
 
 				do
@@ -115,6 +128,7 @@ BREAK_DO_WHILE:
 	{
 		msg = wxT("SERVER IS NOT OPENED!");
 	}
+
 	if (res == false)
 	{
 		socket->Close();
@@ -125,5 +139,100 @@ BREAK_DO_WHILE:
 		handler(res, msg);
 	});
 	delete[] m_shaBytes;
+	return nullptr;
+}
+
+ClientFileTransfer::ThreadGetLogTransferFiles::ThreadGetLogTransferFiles(wxEvtHandler * eventHandler, const std::function<void(bool,wxString msg, std::vector<wxString>)>& handler)
+{
+	m_eventHandler = eventHandler;
+	m_handler = handler;
+}
+
+ClientFileTransfer::ThreadGetLogTransferFiles::~ThreadGetLogTransferFiles()
+{
+
+}
+
+void * ClientFileTransfer::ThreadGetLogTransferFiles::Entry()
+{
+	wxSocketClient * sock = ClientFileTransfer::Instance().m_socket;
+	
+	auto CMD_LIST = "LIST\n";
+	sock->Write(CMD_LIST, strlen(CMD_LIST));
+	wxMemoryBuffer buffer;
+	bool isEnd = false;
+	bool res = false;
+	wxString msg;
+	std::vector<wxString>* resultList = new std::vector<wxString>();
+	int step = 0;
+	sock->SetTimeout(20);
+	do
+	{
+		int sizeLastRead = 0;
+		BYTE temp[2048];
+		if (sock->IsDisconnected())
+		{
+			msg = wxT("SERVER IS DISCONNECTED!");
+			delete  ClientFileTransfer::Instance().m_socket;
+			ClientFileTransfer::Instance().m_socket = nullptr;
+			break;
+		}
+		sock->WaitForRead(5);
+		sizeLastRead = sock->Read(temp, 2048).GetLastIOReadSize();
+		
+		for (int i = 0; i < sizeLastRead; i++)
+		{
+			if (temp[i] == '\n')
+			{
+				buffer.AppendData(temp, i);
+				switch(step)
+				{
+				case 0:{
+					wxString ressultCode = wxString::FromUTF8(buffer, buffer.GetDataLen());
+					if (ressultCode == wxT("OK"))
+					{
+						step = 1;
+					}
+					else
+					{
+						isEnd = true;
+						msg = wxT("SERVER DENIED!");
+					}
+				}
+				break;
+				case 1:{
+					wxString listString = wxString::FromUTF8(buffer, buffer.GetDataLen());
+					int splitIndex = -1;
+					while ((splitIndex = listString.Find(wxT(';')))!= -1)
+					{
+						wxString item = listString.substr(0, splitIndex);
+						resultList->push_back(std::move(item));
+						listString.Remove(0, splitIndex + 1);
+					}
+					isEnd = true;
+					res = true;
+				}
+				break;
+				}
+				
+				buffer.Clear();
+				if (i != sizeLastRead - 1)
+				{
+					buffer.AppendData(temp + i + 1, sizeLastRead - i - 1);
+				}
+				
+				if (isEnd)
+				{
+					break;
+				}
+			}
+		}
+	} while (isEnd == false);
+
+	auto handler = this->m_handler;
+	m_eventHandler->CallAfter([handler, res, msg, resultList] {
+		handler(res, msg, *resultList);
+		delete resultList;
+	});
 	return nullptr;
 }

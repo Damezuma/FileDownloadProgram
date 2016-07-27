@@ -89,6 +89,16 @@ GUIMainFrame::GUIMainFrame( wxWindow* parent, wxWindowID id, const wxString& tit
 	bSizer4->Fit( m_panel3 );
 	m_notebook1->AddPage( m_panel3, wxT("전송"), false );
 	m_panel6 = new wxPanel( m_notebook1, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer8;
+	bSizer8 = new wxBoxSizer( wxVERTICAL );
+	
+	ui_logList = new wxListCtrl( m_panel6, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT );
+	bSizer8->Add( ui_logList, 1, wxALL|wxEXPAND, 5 );
+	
+	
+	m_panel6->SetSizer( bSizer8 );
+	m_panel6->Layout();
+	bSizer8->Fit( m_panel6 );
 	m_notebook1->AddPage( m_panel6, wxT("전송기록"), false );
 	
 	bSizer3->Add( m_notebook1, 1, wxEXPAND, 5 );

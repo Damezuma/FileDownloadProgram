@@ -28,17 +28,18 @@ public:
 	}
 	~ClientFileTransfer();
 	void TryLogin(wxString id, wxString password, PasswordType passwordType,  wxEvtHandler* eventHandler , const std::function<void(bool, wxString)> & handler);
+	void TryGetTransferLogs(wxEvtHandler* eventHandler,  const std::function<void(bool, wxString msg, std::vector<wxString>)> & handler);
 private:
 	ClientFileTransfer(ClientFileTransfer& ref) {}
 	ClientFileTransfer() {}
 
 	wxSocketClient* m_socket = nullptr;;
 
-	class LoginThread : public wxThread
+	class ThreadLogin : public wxThread
 	{
 	public:
-		LoginThread(const wxString & userId, const wxString & password, PasswordType passwordType, wxEvtHandler* eventHandler, const std::function<void(bool, wxString)> & handler);
-		~LoginThread() {
+		ThreadLogin(const wxString & userId, const wxString & password, PasswordType passwordType, wxEvtHandler* eventHandler, const std::function<void(bool, wxString)> & handler);
+		~ThreadLogin() {
 
 		}
 		virtual void* Entry() override;
@@ -48,5 +49,15 @@ private:
 		PasswordType m_passwordType;
 		wxEvtHandler* m_eventHandler;
 		std::function<void(bool, wxString)> m_handler;
+	};
+	class ThreadGetLogTransferFiles : public wxThread
+	{
+	public:
+		ThreadGetLogTransferFiles(wxEvtHandler* eventHandler, const std::function<void(bool, wxString msg, std::vector<wxString>)> & handler);
+		~ThreadGetLogTransferFiles();
+		virtual void * Entry() override;
+	private:
+		wxEvtHandler* m_eventHandler;
+		std::function<void(bool, wxString msg, std::vector<wxString>)>  m_handler;
 	};
 };

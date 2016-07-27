@@ -26,6 +26,7 @@
 #include <wx/bitmap.h>
 #include <wx/image.h>
 #include <wx/icon.h>
+#include <wx/listctrl.h>
 #include <wx/notebook.h>
 #include <wx/frame.h>
 #include <wx/dialog.h>
@@ -55,6 +56,7 @@ class GUIMainFrame : public wxFrame
 		wxListBox* ui_listSendFiles;
 		wxButton* ui_btnTrySendFile;
 		wxPanel* m_panel6;
+		wxListCtrl* ui_logList;
 	
 	public:
 		
