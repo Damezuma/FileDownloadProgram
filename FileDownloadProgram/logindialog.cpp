@@ -23,7 +23,7 @@ void LoginDialog::OnClickTryLogin(wxCommandEvent & event)
 	indicator->CentreOnParent();
 	indicator->Start();
 	Enable(false);
-	instance.TryLogin(GetId(), GetPassword(), PasswordType::UserPassword, this, [this, indicator](bool res)->void {
+	instance.TryLogin(GetId(), GetPassword(), PasswordType::UserPassword, this, [this, indicator](bool res,wxString msg)->void {
 		this->Enable(true);
 		indicator->Stop();
 		indicator->Close(true);
@@ -35,7 +35,7 @@ void LoginDialog::OnClickTryLogin(wxCommandEvent & event)
 		}
 		else
 		{
-			wxMessageBox(wxT("ID혹은 패스워드가 틀렸습니다. 다시 확인하시길 바랍니다."), wxT("오류"));
+			wxMessageBox(msg, wxT("오류"));
 		}
 	});
 	
