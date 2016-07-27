@@ -6,8 +6,11 @@
 #include <wx/icon.h>
 #include <wx/bitmap.h>
 #include "ui.h"
+#include <wx/socket.h>
+#include "filetransferclient.h"
 bool Application::OnInit()
 {
+	wxSocketBase::Initialize();
 	UI::Initialize();
 	m_isLogin = false;
 	m_checker = new wxSingleInstanceChecker();
@@ -19,6 +22,9 @@ bool Application::OnInit()
 	LoginDialog * dialog = new LoginDialog();
 	if (dialog->ShowModal() == wxID_OK)
 	{
+		wxString id = dialog->GetId();
+		wxString password = dialog->GetPassword();
+
 		UI& ui = UI::Instance();
 		m_isLogin = true;
 		ui.mainframe = new MainFrame();
@@ -26,11 +32,18 @@ bool Application::OnInit()
 		ui.taskIcon = new TaskIcon();
 	}
 	delete dialog;
+	if(m_isLogin == false)
+	{
+		Exit();
+	}
+	
 	return true;
 }
 int Application::OnExit()
 {
 	delete m_checker;
+	UI::Release();
+	ClientFileTransfer::Release();
 	return 0;
 }
 DECLARE_APP(Application)

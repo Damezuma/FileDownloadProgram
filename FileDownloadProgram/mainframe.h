@@ -6,4 +6,6 @@ class MainFrame : public GUIMainFrame
 public:
 	MainFrame();
 	~MainFrame();
+protected:
+	void OnActivateLogPage(wxActivateEvent & event);
 };

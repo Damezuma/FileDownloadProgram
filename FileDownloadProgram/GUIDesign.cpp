@@ -16,6 +16,83 @@ GUIMainFrame::GUIMainFrame( wxWindow* parent, wxWindowID id, const wxString& tit
 	wxBoxSizer* bSizer3;
 	bSizer3 = new wxBoxSizer( wxVERTICAL );
 	
+	m_notebook1 = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	m_panel3 = new wxPanel( m_notebook1, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer4;
+	bSizer4 = new wxBoxSizer( wxVERTICAL );
+	
+	m_splitter1 = new wxSplitterWindow( m_panel3, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_3D );
+	m_splitter1->Connect( wxEVT_IDLE, wxIdleEventHandler( GUIMainFrame::m_splitter1OnIdle ), NULL, this );
+	
+	m_panel1 = new wxPanel( m_splitter1, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer31;
+	bSizer31 = new wxBoxSizer( wxVERTICAL );
+	
+	ui_dirTreeCtrl = new wxGenericDirCtrl( m_panel1, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxDIRCTRL_3D_INTERNAL|wxSUNKEN_BORDER, wxEmptyString, 0 );
+	
+	ui_dirTreeCtrl->ShowHidden( false );
+	bSizer31->Add( ui_dirTreeCtrl, 1, wxEXPAND, 5 );
+	
+	
+	m_panel1->SetSizer( bSizer31 );
+	m_panel1->Layout();
+	bSizer31->Fit( m_panel1 );
+	m_panel2 = new wxPanel( m_splitter1, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer5;
+	bSizer5 = new wxBoxSizer( wxVERTICAL );
+	
+	m_splitter2 = new wxSplitterWindow( m_panel2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_3D );
+	m_splitter2->Connect( wxEVT_IDLE, wxIdleEventHandler( GUIMainFrame::m_splitter2OnIdle ), NULL, this );
+	
+	m_panel4 = new wxPanel( m_splitter2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer6;
+	bSizer6 = new wxBoxSizer( wxVERTICAL );
+	
+	m_staticText3 = new wxStaticText( m_panel4, wxID_ANY, wxT("전송사유"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText3->Wrap( -1 );
+	bSizer6->Add( m_staticText3, 0, wxALL, 5 );
+	
+	ui_reasonSendFileTextCtrl = new wxTextCtrl( m_panel4, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE );
+	bSizer6->Add( ui_reasonSendFileTextCtrl, 1, wxEXPAND, 5 );
+	
+	
+	m_panel4->SetSizer( bSizer6 );
+	m_panel4->Layout();
+	bSizer6->Fit( m_panel4 );
+	m_panel5 = new wxPanel( m_splitter2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer7;
+	bSizer7 = new wxBoxSizer( wxVERTICAL );
+	
+	ui_listSendFiles = new wxListBox( m_panel5, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
+	bSizer7->Add( ui_listSendFiles, 1, wxEXPAND, 5 );
+	
+	ui_btnTrySendFile = new wxButton( m_panel5, wxID_ANY, wxT("전송"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer7->Add( ui_btnTrySendFile, 0, wxALL|wxEXPAND, 5 );
+	
+	
+	m_panel5->SetSizer( bSizer7 );
+	m_panel5->Layout();
+	bSizer7->Fit( m_panel5 );
+	m_splitter2->SplitHorizontally( m_panel4, m_panel5, 0 );
+	bSizer5->Add( m_splitter2, 1, wxEXPAND, 5 );
+	
+	
+	m_panel2->SetSizer( bSizer5 );
+	m_panel2->Layout();
+	bSizer5->Fit( m_panel2 );
+	m_splitter1->SplitVertically( m_panel1, m_panel2, 0 );
+	bSizer4->Add( m_splitter1, 1, wxEXPAND, 5 );
+	
+	
+	m_panel3->SetSizer( bSizer4 );
+	m_panel3->Layout();
+	bSizer4->Fit( m_panel3 );
+	m_notebook1->AddPage( m_panel3, wxT("전송"), false );
+	m_panel6 = new wxPanel( m_notebook1, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	m_notebook1->AddPage( m_panel6, wxT("전송기록"), false );
+	
+	bSizer3->Add( m_notebook1, 1, wxEXPAND, 5 );
+	
 	
 	this->SetSizer( bSizer3 );
 	this->Layout();

@@ -69,6 +69,12 @@
     <ClInclude Include="ui.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="filetransferclient.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="KISA_SHA256.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="app.cpp">
@@ -87,6 +93,12 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="ui.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="filetransferclient.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="KISA_SHA256.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
