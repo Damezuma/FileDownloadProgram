@@ -2,6 +2,7 @@
 #include "mainframe.h"
 #include "ui.h"
 #include "filetransferclient.h"
+#include "wx/filedlg.h "
 MainFrame::MainFrame() :GUIMainFrame(nullptr, wxID_ANY, TEXT("파일 다운로드 프로그램"))
 {
 	SetIcon(wxICON(WXICON_AAA));
@@ -72,4 +73,24 @@ void MainFrame::UpdateLogList(std::vector<wxString>&& data)
 void MainFrame::OnActivateLogPage(wxActivateEvent & event)
 {
 	
+}
+
+void MainFrame::OnClickAddFile(wxCommandEvent & event)
+{
+	wxFileDialog dialog(this, wxFileSelectorPromptStr, wxEmptyString, wxEmptyString, wxFileSelectorDefaultWildcardStr, wxFD_OPEN | wxFD_MULTIPLE | wxFD_PREVIEW | wxFD_FILE_MUST_EXIST);
+	if (dialog.ShowModal() == wxID_OK)
+	{
+		wxArrayString paths;
+		dialog.GetPaths(paths);
+		for (wxString & path : paths)
+		{
+			wxFileName* name = new wxFileName(path);
+			ui_listSendFiles->Append(name->GetName(), name);
+		}
+	}
+}
+
+void MainFrame::OnClickSubmit(wxCommandEvent & event)
+{
+
 }

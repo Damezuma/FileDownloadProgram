@@ -9,5 +9,7 @@ protected:
 	virtual wxMenu * CreatePopupMenu();
 	void OnMenuClose(wxCommandEvent & event);
 	void OnMenuShow(wxCommandEvent & event);
+	void OnMenuGetOTP(wxCommandEvent & event);
+	void OnDClickIcon(wxTaskBarIconEvent & event);
 DECLARE_EVENT_TABLE();
 };

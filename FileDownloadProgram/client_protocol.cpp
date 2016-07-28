@@ -11,6 +11,14 @@ CommandGetFileLog::CommandGetFileLog(wxEvtHandler * eventHandler, const std::fun
 }
 bool CommandGetFileLog::Execute(wxSocketClient * socket)
 {
+	auto handler = this->m_handler;
+	if (socket == nullptr)
+	{
+		
+		m_eventHandler->CallAfter([handler] {
+			handler(false, wxT("CAN NOT CONNECT TO SERVER"),std::vector<wxString>());
+		});
+	}
 	auto CMD_LIST = "LIST\n";
 	socket->Write(CMD_LIST, strlen(CMD_LIST));
 	wxMemoryBuffer buffer;
@@ -81,7 +89,7 @@ bool CommandGetFileLog::Execute(wxSocketClient * socket)
 		}
 	} while (isEnd == false);
 
-	auto handler = this->m_handler;
+	
 	m_eventHandler->CallAfter([this, handler, res, msg, resultList] {
 		handler(res, msg, *resultList);
 		delete resultList;
@@ -91,6 +99,10 @@ bool CommandGetFileLog::Execute(wxSocketClient * socket)
 
 bool CommandGetRemainedFileList::Execute(wxSocketClient * socket)
 {
+	if (socket == nullptr)
+	{
+		return true;
+	}
 	auto CMD_LIST = "REMAINED FILE LIST\n";
 	socket->Write(CMD_LIST, strlen(CMD_LIST));
 	
@@ -176,6 +188,10 @@ CommandGetFile::CommandGetFile(const wxString & directory, int uid)
 
 bool CommandGetFile::Execute(wxSocketClient * socket)
 {
+	if (socket == nullptr)
+	{
+		return true;
+	}
 	wxFile * file = nullptr;
 	bool isEnd = false;
 	int step = 0;
@@ -278,7 +294,6 @@ CommandLogin::CommandLogin(const wxString & userId, const wxString & password, P
 
 bool CommandLogin::Execute(wxSocketClient * socket)
 {
-	
 	bool res = false;
 	wxString msg;
 	auto handler = this->m_handler;
@@ -289,7 +304,7 @@ bool CommandLogin::Execute(wxSocketClient * socket)
 		m_eventHandler->CallAfter([handler] {
 			handler(false, wxT("CAN NOT CONNECT TO SERVER"));
 		});
-		delete[] m_shaBytes;
+		return true;
 	}
 	do {
 		if (socket->IsDisconnected())break;
@@ -383,6 +398,10 @@ CommandCompleteDownloadFile::CommandCompleteDownloadFile(int uid)
 
 bool CommandCompleteDownloadFile::Execute(wxSocketClient * socket)
 {
+	if (socket == nullptr)
+	{
+		return true;
+	}
 	wxMemoryBuffer memory;
 	auto CMD_LIST = "COMPLETE GET FILE\n";
 	wxString uid = wxString::Format(wxT("%d\n"), m_uid);
@@ -414,4 +433,106 @@ bool CommandCompleteDownloadFile::Execute(wxSocketClient * socket)
 		}
 	}
 	return true;
+}
+
+CommandGetOTP::CommandGetOTP(wxEvtHandler * eventHandler, const std::function<void(bool, wxString)>& handler)
+{
+	m_eventHandler = eventHandler;
+	m_handler = handler;
+}
+
+bool CommandGetOTP::Execute(wxSocketClient * socket)
+{
+	auto handler = m_handler;
+	auto CMD_LIST = "GET OTP\n";
+	int step = 1;
+	wxMemoryBuffer memory;
+	wxString reason = wxT("UNKNOWN");
+	wxString OTPCode;
+	bool res = false;
+	if (socket == nullptr)
+	{
+
+		m_eventHandler->CallAfter([handler]() {
+			handler(false, wxT("CAN NOT CONNECT TO SERVER!"));
+		});
+		return false;
+	}
+
+	socket->Write(CMD_LIST, strlen(CMD_LIST));
+	while (true)
+	{
+		wxByte abyte = -1;
+		if (socket->Read(&abyte, 1).GetLastIOReadSize() == 1)
+		{
+			if (abyte == '\n')
+			{
+				if (step == 1)
+				{
+					wxString msg = wxString::FromUTF8(memory, memory.GetDataLen());
+					if (msg == wxT("OK"))
+					{
+						memory.Clear();
+						step = 2;
+					}
+					else
+					{
+						reason = msg;
+						break;
+					}
+				}
+				else if(step == 2)
+				{
+					res = true;
+					OTPCode = wxString::FromUTF8(memory, memory.GetDataLen());
+					break;
+				}
+			}
+			else
+			{
+				memory.AppendByte(abyte);
+			}
+		}
+		else if (socket->IsDisconnected())
+		{
+			break;
+		}
+	}
+	if (res)
+	{
+		m_eventHandler->CallAfter([handler, res, OTPCode]() {
+			handler(res, OTPCode);
+		});
+	}
+	else
+	{
+		m_eventHandler->CallAfter([handler, res, reason]() {
+			handler(res, reason);
+		});
+	}
+	
+	return true;
+}
+
+CommandSendFile::CommandSendFile(std::vector<wxFileName> & files, wxEvtHandler* eventHandler, const std::function<void(bool, int)> & handler)
+{
+	m_handler = handler;
+	m_eventHandler = eventHandler;
+	m_files = files;
+}
+
+bool CommandSendFile::Execute(wxSocketClient * socket)
+{
+	auto handler = m_handler;
+	if (socket == nullptr)
+	{
+		m_eventHandler->CallAfter([handler]() {
+			handler(false,-1);
+		});
+		return false;
+	}
+	auto CMD_LIST = "POST FILE\n";
+	socket->Write(CMD_LIST, strlen(CMD_LIST));
+
+	return false;
 }

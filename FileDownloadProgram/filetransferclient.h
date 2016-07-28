@@ -38,7 +38,7 @@ public:
 	~ClientFileTransfer();
 	void TryLogin(wxString id, wxString password, PasswordType passwordType,  wxEvtHandler* eventHandler , const std::function<void(bool, wxString)> & handler);
 	void TryGetTransferLogs(wxEvtHandler* eventHandler,  const std::function<void(bool, wxString msg, std::vector<wxString>)> & handler);
-
+	void TryGetOTP(wxEvtHandler* eventHandler, const std::function<void(bool, wxString)> & handler);
 
 	void AddCommand(ICommand * command);
 private:

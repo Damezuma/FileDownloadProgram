@@ -23,7 +23,12 @@ void LoginDialog::OnClickTryLogin(wxCommandEvent & event)
 	indicator->CentreOnParent();
 	indicator->Start();
 	Enable(false);
-	instance.TryLogin(GetId(), GetPassword(), PasswordType::UserPassword, this, [this, indicator](bool res,wxString msg)->void {
+	PasswordType type = PasswordType::UserPassword;
+	if (this->ui_radioOTP->GetValue())
+	{
+		type = PasswordType::OTP;
+	}
+	instance.TryLogin(GetId(), GetPassword(), type, this, [this, indicator](bool res,wxString msg)->void {
 		this->Enable(true);
 		indicator->Stop();
 		indicator->Close(true);

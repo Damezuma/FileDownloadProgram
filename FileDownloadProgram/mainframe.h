@@ -9,4 +9,6 @@ public:
 	void UpdateLogList(std::vector<wxString>&& data);
 protected:
 	void OnActivateLogPage(wxActivateEvent & event);
+	virtual void OnClickAddFile(wxCommandEvent& event);
+	virtual void OnClickSubmit(wxCommandEvent& event);
 };

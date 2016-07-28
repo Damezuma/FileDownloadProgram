@@ -41,3 +41,20 @@ public:
 private:
 	int m_uid;
 };
+class CommandGetOTP : public ICommand {
+public:
+	CommandGetOTP(wxEvtHandler* eventHandler, const std::function<void(bool, wxString)> & handler);
+	virtual bool Execute(wxSocketClient * socket) override;
+private:
+	wxEvtHandler* m_eventHandler;
+	std::function<void(bool, wxString)> m_handler;
+};
+class CommandSendFile : public ICommand {
+public:
+	CommandSendFile(std::vector<wxFileName> & files,  wxEvtHandler* eventHandler, const std::function<void(bool, int)> & handler);
+	virtual bool Execute(wxSocketClient * socket) override;
+private:
+	std::vector<wxFileName> m_files;
+	wxEvtHandler* m_eventHandler;
+	std::function<void(bool, int)> m_handler;
+};

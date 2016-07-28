@@ -21,27 +21,7 @@ GUIMainFrame::GUIMainFrame( wxWindow* parent, wxWindowID id, const wxString& tit
 	wxBoxSizer* bSizer4;
 	bSizer4 = new wxBoxSizer( wxVERTICAL );
 	
-	m_splitter1 = new wxSplitterWindow( m_panel3, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_3D );
-	m_splitter1->Connect( wxEVT_IDLE, wxIdleEventHandler( GUIMainFrame::m_splitter1OnIdle ), NULL, this );
-	
-	m_panel1 = new wxPanel( m_splitter1, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	wxBoxSizer* bSizer31;
-	bSizer31 = new wxBoxSizer( wxVERTICAL );
-	
-	ui_dirTreeCtrl = new wxGenericDirCtrl( m_panel1, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxDIRCTRL_3D_INTERNAL|wxSUNKEN_BORDER, wxEmptyString, 0 );
-	
-	ui_dirTreeCtrl->ShowHidden( false );
-	bSizer31->Add( ui_dirTreeCtrl, 1, wxEXPAND, 5 );
-	
-	
-	m_panel1->SetSizer( bSizer31 );
-	m_panel1->Layout();
-	bSizer31->Fit( m_panel1 );
-	m_panel2 = new wxPanel( m_splitter1, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	wxBoxSizer* bSizer5;
-	bSizer5 = new wxBoxSizer( wxVERTICAL );
-	
-	m_splitter2 = new wxSplitterWindow( m_panel2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_3D );
+	m_splitter2 = new wxSplitterWindow( m_panel3, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_3D );
 	m_splitter2->Connect( wxEVT_IDLE, wxIdleEventHandler( GUIMainFrame::m_splitter2OnIdle ), NULL, this );
 	
 	m_panel4 = new wxPanel( m_splitter2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
@@ -66,22 +46,24 @@ GUIMainFrame::GUIMainFrame( wxWindow* parent, wxWindowID id, const wxString& tit
 	ui_listSendFiles = new wxListBox( m_panel5, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
 	bSizer7->Add( ui_listSendFiles, 1, wxEXPAND, 5 );
 	
+	wxBoxSizer* bSizer10;
+	bSizer10 = new wxBoxSizer( wxHORIZONTAL );
+	
+	ui_btnAddFiles = new wxButton( m_panel5, wxID_ANY, wxT("파일추가"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer10->Add( ui_btnAddFiles, 0, wxALL, 5 );
+	
 	ui_btnTrySendFile = new wxButton( m_panel5, wxID_ANY, wxT("전송"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer7->Add( ui_btnTrySendFile, 0, wxALL|wxEXPAND, 5 );
+	bSizer10->Add( ui_btnTrySendFile, 0, wxALL|wxEXPAND, 5 );
+	
+	
+	bSizer7->Add( bSizer10, 0, wxEXPAND, 5 );
 	
 	
 	m_panel5->SetSizer( bSizer7 );
 	m_panel5->Layout();
 	bSizer7->Fit( m_panel5 );
 	m_splitter2->SplitHorizontally( m_panel4, m_panel5, 0 );
-	bSizer5->Add( m_splitter2, 1, wxEXPAND, 5 );
-	
-	
-	m_panel2->SetSizer( bSizer5 );
-	m_panel2->Layout();
-	bSizer5->Fit( m_panel2 );
-	m_splitter1->SplitVertically( m_panel1, m_panel2, 0 );
-	bSizer4->Add( m_splitter1, 1, wxEXPAND, 5 );
+	bSizer4->Add( m_splitter2, 1, wxEXPAND, 5 );
 	
 	
 	m_panel3->SetSizer( bSizer4 );
@@ -108,10 +90,18 @@ GUIMainFrame::GUIMainFrame( wxWindow* parent, wxWindowID id, const wxString& tit
 	this->Layout();
 	
 	this->Centre( wxBOTH );
+	
+	// Connect Events
+	ui_btnAddFiles->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( GUIMainFrame::OnClickAddFile ), NULL, this );
+	ui_btnTrySendFile->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( GUIMainFrame::OnClickSubmit ), NULL, this );
 }
 
 GUIMainFrame::~GUIMainFrame()
 {
+	// Disconnect Events
+	ui_btnAddFiles->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( GUIMainFrame::OnClickAddFile ), NULL, this );
+	ui_btnTrySendFile->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( GUIMainFrame::OnClickSubmit ), NULL, this );
+	
 }
 
 GUILoginDialog::GUILoginDialog( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
@@ -144,7 +134,20 @@ GUILoginDialog::GUILoginDialog( wxWindow* parent, wxWindowID id, const wxString&
 	
 	bSizer2->Add( fgSizer2, 1, wxEXPAND, 5 );
 	
-	m_button1 = new wxButton( this, wxID_ANY, wxT("Login"), wxDefaultPosition, wxDefaultSize, 0 );
+	wxBoxSizer* bSizer9;
+	bSizer9 = new wxBoxSizer( wxHORIZONTAL );
+	
+	ui_radioPassword = new wxRadioButton( this, wxID_ANY, wxT("비밀번호"), wxDefaultPosition, wxDefaultSize, 0 );
+	ui_radioPassword->SetValue( true ); 
+	bSizer9->Add( ui_radioPassword, 0, wxALL, 5 );
+	
+	ui_radioOTP = new wxRadioButton( this, wxID_ANY, wxT("OTP"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer9->Add( ui_radioOTP, 0, wxALL, 5 );
+	
+	
+	bSizer2->Add( bSizer9, 0, wxALIGN_CENTER_HORIZONTAL, 5 );
+	
+	m_button1 = new wxButton( this, wxID_ANY, wxT("로그인"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer2->Add( m_button1, 0, wxALL|wxEXPAND, 5 );
 	
 	
