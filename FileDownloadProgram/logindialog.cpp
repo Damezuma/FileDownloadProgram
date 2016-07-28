@@ -38,6 +38,4 @@ void LoginDialog::OnClickTryLogin(wxCommandEvent & event)
 			wxMessageBox(msg, wxT("Error!"));
 		}
 	});
-	
-
 }

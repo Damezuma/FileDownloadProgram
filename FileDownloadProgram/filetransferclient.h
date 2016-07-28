@@ -3,10 +3,18 @@
 #include "wx/event.h"
 #include <functional>
 #include <wx/socket.h>
+#include <wx/msgqueue.h>
 enum PasswordType
 {
 	OTP,
 	UserPassword
+};
+
+class ICommand
+{
+public:
+	virtual bool Execute(wxSocketClient * socket) = 0;
+	~ICommand() {}
 };
 class ClientFileTransfer
 {
@@ -21,6 +29,7 @@ public:
 	static void Release() {
 		if (s_instance != nullptr)
 		{
+			s_instance->m_isEnd = true;
 			delete s_instance;
 		}
 		
@@ -29,35 +38,19 @@ public:
 	~ClientFileTransfer();
 	void TryLogin(wxString id, wxString password, PasswordType passwordType,  wxEvtHandler* eventHandler , const std::function<void(bool, wxString)> & handler);
 	void TryGetTransferLogs(wxEvtHandler* eventHandler,  const std::function<void(bool, wxString msg, std::vector<wxString>)> & handler);
+
+
+	void AddCommand(ICommand * command);
 private:
 	ClientFileTransfer(ClientFileTransfer& ref) {}
-	ClientFileTransfer() {}
-
+	ClientFileTransfer();
 	wxSocketClient* m_socket = nullptr;;
-
-	class ThreadLogin : public wxThread
+	wxThread* m_threadTransfer = nullptr;
+	wxMessageQueue<ICommand*> m_queue;
+	bool m_isEnd = false;
+	class ThreadTransfer : public wxThread
 	{
 	public:
-		ThreadLogin(const wxString & userId, const wxString & password, PasswordType passwordType, wxEvtHandler* eventHandler, const std::function<void(bool, wxString)> & handler);
-		~ThreadLogin() {
-
-		}
 		virtual void* Entry() override;
-	private:
-		wxString m_id;
-		wxByte * m_shaBytes = nullptr;
-		PasswordType m_passwordType;
-		wxEvtHandler* m_eventHandler;
-		std::function<void(bool, wxString)> m_handler;
-	};
-	class ThreadGetLogTransferFiles : public wxThread
-	{
-	public:
-		ThreadGetLogTransferFiles(wxEvtHandler* eventHandler, const std::function<void(bool, wxString msg, std::vector<wxString>)> & handler);
-		~ThreadGetLogTransferFiles();
-		virtual void * Entry() override;
-	private:
-		wxEvtHandler* m_eventHandler;
-		std::function<void(bool, wxString msg, std::vector<wxString>)>  m_handler;
 	};
 };

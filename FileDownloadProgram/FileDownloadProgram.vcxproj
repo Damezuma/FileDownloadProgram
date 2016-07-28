@@ -159,6 +159,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\..\..\..\..\..\wxWidgets-3.1.0\include\wx\msw\resource.h" />
     <ClInclude Include="app.h" />
+    <ClInclude Include="client_protocol.h" />
     <ClInclude Include="filetransferclient.h" />
     <ClInclude Include="GUIDesign.h" />
     <ClInclude Include="KISA_SHA256.h" />
@@ -169,6 +170,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="app.cpp" />
+    <ClCompile Include="client_protocol.cpp" />
     <ClCompile Include="filetransferclient.cpp" />
     <ClCompile Include="GUIDesign.cpp" />
     <ClCompile Include="KISA_SHA256.c" />
