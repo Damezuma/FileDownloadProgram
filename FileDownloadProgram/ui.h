@@ -1,6 +1,7 @@
 #pragma once
 #include "taskicon.h"
 #include "MainFrame.h"
+#include "GUIDesign.h"
 class UI
 {
 public:
@@ -9,6 +10,7 @@ public:
 	static void Release();
 	TaskIcon * taskIcon = nullptr;
 	MainFrame * mainframe = nullptr;
+	GUIUploadProgressDialog * uploadPrograssDialog = nullptr;
 private:
 	UI();
 	UI(UI & ref) {}

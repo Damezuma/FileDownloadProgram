@@ -2,7 +2,7 @@
 #include "wx/wx.h"
 #include "wx/socket.h"
 #include "filetransferclient.h"
-
+#include <wx/filename.h>
 class CommandLogin : public ICommand {
 public:
 	CommandLogin(const wxString & userId, const wxString & password, PasswordType passwordType, wxEvtHandler* eventHandler, const std::function<void(bool, wxString)> & handler);
@@ -49,12 +49,22 @@ private:
 	wxEvtHandler* m_eventHandler;
 	std::function<void(bool, wxString)> m_handler;
 };
+
+
+
+class IFileTransferEvent {
+public:
+	virtual void OnFaild(const wxString & reason) = 0;
+	virtual void OnProgrssTransferFile(int index,int totoalSize, int readSize) = 0;
+	virtual void OnComplete() = 0;
+};
 class CommandSendFile : public ICommand {
 public:
-	CommandSendFile(std::vector<wxFileName> & files,  wxEvtHandler* eventHandler, const std::function<void(bool, int)> & handler);
+	CommandSendFile(const wxString& comments, std::vector<wxFileName> & files,  wxEvtHandler* eventHandler, IFileTransferEvent * handler);
 	virtual bool Execute(wxSocketClient * socket) override;
 private:
 	std::vector<wxFileName> m_files;
 	wxEvtHandler* m_eventHandler;
-	std::function<void(bool, int)> m_handler;
+	IFileTransferEvent* m_handler;
+	wxString m_comments;
 };

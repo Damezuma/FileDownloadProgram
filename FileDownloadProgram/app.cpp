@@ -8,6 +8,7 @@
 #include "ui.h"
 #include <wx/socket.h>
 #include "filetransferclient.h"
+#include "client_protocol.h"
 bool Application::OnInit()
 {
 	wxSocketBase::Initialize();
@@ -36,7 +37,9 @@ bool Application::OnInit()
 	{
 		Exit();
 	}
-	
+	wxTimer * timer = new wxTimer(this);
+	timer->Connect(wxEVT_TIMER, wxTimerEventHandler(Application::OnTimer), NULL, this);
+	timer->Start(1000 * 60);
 	return true;
 }
 int Application::OnExit()
@@ -45,6 +48,10 @@ int Application::OnExit()
 	UI::Release();
 	ClientFileTransfer::Release();
 	return 0;
+}
+void Application::OnTimer(wxTimerEvent & event)
+{
+	ClientFileTransfer::Instance().AddCommand(new CommandGetRemainedFileList());
 }
 DECLARE_APP(Application)
 IMPLEMENT_APP(Application)

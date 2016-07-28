@@ -16,6 +16,7 @@ public:
 	virtual bool Execute(wxSocketClient * socket) = 0;
 	~ICommand() {}
 };
+class IFileTransferEvent;
 class ClientFileTransfer
 {
 private:

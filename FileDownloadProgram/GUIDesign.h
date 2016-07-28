@@ -30,6 +30,7 @@
 #include <wx/frame.h>
 #include <wx/radiobut.h>
 #include <wx/dialog.h>
+#include <wx/gauge.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -98,6 +99,26 @@ class GUILoginDialog : public wxDialog
 		
 		GUILoginDialog( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("로그인"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE ); 
 		~GUILoginDialog();
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class GUIUploadProgressDialog
+///////////////////////////////////////////////////////////////////////////////
+class GUIUploadProgressDialog : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxStaticText* m_staticText4;
+	
+	public:
+		wxGauge* ui_progress1;
+		wxStaticText* ui_fileName;
+		wxGauge* ui_progress2;
+		
+		GUIUploadProgressDialog( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("진행상황"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxCAPTION|wxSTAY_ON_TOP ); 
+		~GUIUploadProgressDialog();
 	
 };
 

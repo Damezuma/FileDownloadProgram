@@ -2,13 +2,11 @@
 #include "mainframe.h"
 #include "ui.h"
 #include "filetransferclient.h"
+#include "client_protocol.h"
 #include "wx/filedlg.h "
 MainFrame::MainFrame() :GUIMainFrame(nullptr, wxID_ANY, TEXT("파일 다운로드 프로그램"))
 {
 	SetIcon(wxICON(WXICON_AAA));
-
-
-
 	wxActivityIndicator * indicator = new wxActivityIndicator(this, wxID_ANY);
 	indicator->FitInside();
 	indicator->Fit();
@@ -85,12 +83,79 @@ void MainFrame::OnClickAddFile(wxCommandEvent & event)
 		for (wxString & path : paths)
 		{
 			wxFileName* name = new wxFileName(path);
-			ui_listSendFiles->Append(name->GetName(), name);
+			ui_listSendFiles->Append(name->GetName() + wxT(".") + name->GetExt(), name);
 		}
 	}
 }
+class Listener : public IFileTransferEvent
+{
+public:
+	virtual void OnFaild(const wxString & reason)
+	{
 
+	}
+	virtual void OnProgrssTransferFile(int index, int percent)
+	{
+
+	}
+	virtual void OnComplete()
+	{
+	}
+};
 void MainFrame::OnClickSubmit(wxCommandEvent & event)
 {
-
+	std::vector<wxFileName> list;
+	for (auto i = 0u; i < ui_listSendFiles->GetCount(); i++)
+	{
+		wxFileName * item =(wxFileName*) ui_listSendFiles->GetClientData(i);
+		list.push_back(*item);
+	}
+	UI::Instance().uploadPrograssDialog = new GUIUploadProgressDialog(this);
+	UI::Instance().uploadPrograssDialog->ui_progress1->SetRange(list.size());
+	UI::Instance().uploadPrograssDialog->ui_progress1->SetValue(0);
+	UI::Instance().uploadPrograssDialog->ui_progress2->SetValue(0);
+	this->Enable(false);
+	class Temp : public IFileTransferEvent {
+	public:
+		virtual void OnFaild(const wxString & reason)
+		{
+			UI::Instance().mainframe->Enable(true);
+			wxMessageBox(reason);
+		}
+		virtual void OnProgrssTransferFile(int index, int totoalSize, int readSize)
+		{
+			auto & instance = UI::Instance();
+			if (instance.uploadPrograssDialog->ui_progress1->GetValue() != index)
+			{
+				instance.uploadPrograssDialog->ui_progress1->SetValue(index);
+			}
+			if (instance.uploadPrograssDialog->ui_progress2->GetRange() != totoalSize)
+			{
+				instance.uploadPrograssDialog->ui_progress2->SetValue(0);
+				instance.uploadPrograssDialog->ui_progress2->SetRange(totoalSize);
+			}
+			if (instance.uploadPrograssDialog->ui_progress2->GetValue() != readSize)
+			{
+				instance.uploadPrograssDialog->ui_progress2->SetValue(readSize);
+			}
+			wxString item = instance.mainframe->ui_listSendFiles->GetString(index);
+			if (item != instance.uploadPrograssDialog->ui_fileName->GetLabelText())
+			{
+				instance.uploadPrograssDialog->ui_fileName->SetLabelText(item);
+				instance.uploadPrograssDialog->Fit();
+			}
+			
+		}
+		virtual void OnComplete()
+		{
+			UI::Instance().uploadPrograssDialog->EndModal(0);
+			UI::Instance().uploadPrograssDialog = nullptr;
+			UI::Instance().mainframe->Enable(true);
+			wxMessageBox(wxT("성공"));
+		}
+	private:
+		
+	};
+	ClientFileTransfer::Instance().AddCommand(new CommandSendFile(ui_reasonSendFileTextCtrl->GetValue(), list, this, new Temp()));
+	UI::Instance().uploadPrograssDialog->ShowModal();
 }

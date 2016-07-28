@@ -167,3 +167,41 @@ GUILoginDialog::~GUILoginDialog()
 	m_button1->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( GUILoginDialog::OnClickTryLogin ), NULL, this );
 	
 }
+
+GUIUploadProgressDialog::GUIUploadProgressDialog( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	wxFlexGridSizer* fgSizer2;
+	fgSizer2 = new wxFlexGridSizer( 2, 2, 0, 0 );
+	fgSizer2->AddGrowableCol( 1 );
+	fgSizer2->SetFlexibleDirection( wxBOTH );
+	fgSizer2->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_staticText4 = new wxStaticText( this, wxID_ANY, wxT("전체"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4->Wrap( -1 );
+	fgSizer2->Add( m_staticText4, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	
+	ui_progress1 = new wxGauge( this, wxID_ANY, 100, wxDefaultPosition, wxDefaultSize, wxGA_HORIZONTAL );
+	ui_progress1->SetValue( 0 ); 
+	fgSizer2->Add( ui_progress1, 0, wxALL, 5 );
+	
+	ui_fileName = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	ui_fileName->Wrap( -1 );
+	fgSizer2->Add( ui_fileName, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	
+	ui_progress2 = new wxGauge( this, wxID_ANY, 100, wxDefaultPosition, wxDefaultSize, wxGA_HORIZONTAL );
+	ui_progress2->SetValue( 0 ); 
+	fgSizer2->Add( ui_progress2, 0, wxALL, 5 );
+	
+	
+	this->SetSizer( fgSizer2 );
+	this->Layout();
+	fgSizer2->Fit( this );
+	
+	this->Centre( wxBOTH );
+}
+
+GUIUploadProgressDialog::~GUIUploadProgressDialog()
+{
+}

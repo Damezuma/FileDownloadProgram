@@ -9,4 +9,6 @@ public:
 private:
 	wxSingleInstanceChecker * m_checker;
 	bool m_isLogin;
+
+	void OnTimer(wxTimerEvent & event);
 };

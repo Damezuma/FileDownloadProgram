@@ -514,11 +514,12 @@ bool CommandGetOTP::Execute(wxSocketClient * socket)
 	return true;
 }
 
-CommandSendFile::CommandSendFile(std::vector<wxFileName> & files, wxEvtHandler* eventHandler, const std::function<void(bool, int)> & handler)
+CommandSendFile::CommandSendFile(const wxString& comments, std::vector<wxFileName> & files, wxEvtHandler* eventHandler, IFileTransferEvent* handler)
 {
 	m_handler = handler;
 	m_eventHandler = eventHandler;
 	m_files = files;
+	m_comments = comments;
 }
 
 bool CommandSendFile::Execute(wxSocketClient * socket)
@@ -527,12 +528,139 @@ bool CommandSendFile::Execute(wxSocketClient * socket)
 	if (socket == nullptr)
 	{
 		m_eventHandler->CallAfter([handler]() {
-			handler(false,-1);
+			handler->OnFaild(wxT("CAN NOT CONNECT TO SERVER!"));
 		});
 		return false;
 	}
 	auto CMD_LIST = "POST FILE\n";
+	bool ableContinue = false;
+	wxMemoryBuffer memory;
 	socket->Write(CMD_LIST, strlen(CMD_LIST));
-
-	return false;
+	
+	{
+		m_comments.Replace('\n', '\r');
+		m_comments.Append(wxT('\n'));
+		auto a = m_comments.ToUTF8();
+		socket->Write(a, a.length());
+	}
+	wxByte byte;
+	ableContinue = false;
+	while (true)
+	{
+		if (socket->Read(&byte, 1).GetLastIOReadSize() != 0)
+		{
+			if (byte == '\n')
+			{
+				wxString msg = wxString::FromUTF8(memory, memory.GetDataLen());
+				if (msg == wxT("OK"))
+				{
+					ableContinue = true;
+				}
+				else
+				{
+					m_eventHandler->CallAfter([handler]() {
+						handler->OnFaild(wxT("SERVER DENEID ACCESS!"));
+					});
+					return true;
+				}
+			}
+			memory.AppendByte(byte);
+		}
+		if (ableContinue == true)
+		{
+			break;
+		}
+	}
+	
+	int i = 0;
+	while (i < m_files.size())
+	{
+		
+		wxFile file;
+		if (file.Open(m_files[i].GetFullPath()) == false)
+		{
+			wxString fullPath = m_files[i].GetFullPath();
+			m_eventHandler->CallAfter([fullPath,handler]() {
+				handler->OnFaild(wxT("CAN NOT ACCESS '") + fullPath + wxT("'"));
+			});
+			return false;
+		}
+		wxString fileName = m_files[i].GetName() + "." + m_files[i].GetExt();
+		int fileSize = file.Length();
+		{
+			auto stringByteBuffer = fileName.ToUTF8();
+			socket->Write(stringByteBuffer, stringByteBuffer.length());
+			wxString fileSizeString = wxString::Format(wxT("|%d\n"), fileSize);
+			stringByteBuffer = fileSizeString.ToUTF8();
+			int writtenSize = 0;
+			while (stringByteBuffer.length() != writtenSize)
+			{
+				writtenSize += socket->Write(stringByteBuffer.data() + writtenSize, stringByteBuffer.length() - writtenSize).GetLastIOWriteSize();
+			}
+			
+		}
+			
+		wxByte* outputbuffer = new wxByte[1024 * 1024]; //1메가 단위로 버퍼를 읽는다.
+			
+		do
+		{
+			ssize_t readSize = file.Read(outputbuffer, 1024 * 1024);
+			if (readSize > 0)
+			{
+				int writeSize = socket->Write(outputbuffer, readSize).GetLastIOWriteSize();
+				while (writeSize < readSize)
+				{
+					writeSize += socket->Write(outputbuffer + writeSize, readSize - writeSize).GetLastIOWriteSize();
+				}
+			}
+		} while (file.Eof() == false);
+		file.Close();
+		long sizeServerGet = 0;
+		memory.Clear();
+		ableContinue = false;
+		while (true)
+		{
+			if (socket->Read(&byte, 1).GetLastIOReadSize() != 0)
+			{
+				if (byte == '\n')
+				{
+					wxString msg = wxString::FromUTF8(memory, memory.GetDataLen());
+						
+					long sizeNowServerGet = 0;
+					if (msg.ToLong(&sizeNowServerGet, 0))
+					{
+						sizeServerGet += sizeNowServerGet;
+						m_handler->OnProgrssTransferFile(i, fileSize, sizeServerGet);
+						if (sizeServerGet == fileSize)
+						{
+							m_handler->OnProgrssTransferFile(i, fileSize, sizeServerGet);
+							break;
+						}
+					}
+					else
+					{
+						m_eventHandler->CallAfter([handler]() {
+							handler->OnFaild(wxT("SERVER DENEID ACCESS!"));
+						});
+						break;
+					}
+					memory.Clear();
+				}
+				memory.AppendByte(byte);
+			}
+			else if(socket->IsDisconnected())
+			{
+				m_eventHandler->CallAfter([handler]() {
+					handler->OnFaild(wxT("DISCONNECTED!"));
+				});
+				break;
+			}
+		}
+		i++;
+		delete[]outputbuffer;
+	}
+	char END_SIGN[] = "END|0\n";
+	socket->Write(END_SIGN, strlen(END_SIGN));
+	m_handler->OnComplete();
+	return true;
 }
