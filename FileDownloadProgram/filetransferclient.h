@@ -41,7 +41,10 @@ public:
 	void TryGetOTP(wxEvtHandler* eventHandler, const std::function<void(bool, wxString)> & handler);
 
 	void AddCommand(ICommand * command);
+	bool IsDownloadingFile() { return m_isDownloadingFile; }
+	void SetDownloadingFile(bool isDownloadFile) { m_isDownloadingFile = isDownloadFile; }
 private:
+	bool m_isDownloadingFile = false;
 	ClientFileTransfer(ClientFileTransfer& ref) {}
 	ClientFileTransfer();
 	wxSocketClient* m_socket = nullptr;;

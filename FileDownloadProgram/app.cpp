@@ -16,10 +16,10 @@ bool Application::OnInit()
 	m_isLogin = false;
 	m_checker = new wxSingleInstanceChecker();
 	
-	//if (m_checker->IsAnotherRunning())
-	//{
-	//	return false;
-	//}
+	if (m_checker->IsAnotherRunning())
+	{
+		return false;
+	}
 	LoginDialog * dialog = new LoginDialog();
 	if (dialog->ShowModal() == wxID_OK)
 	{
@@ -47,7 +47,6 @@ bool Application::OnInit()
 }
 int Application::OnExit()
 {
-	
 	delete m_checker;
 	UI::Release();
 	ClientFileTransfer::Release();
