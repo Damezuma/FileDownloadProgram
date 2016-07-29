@@ -4,6 +4,7 @@
 #include <wx/file.h>
 #include <wx/filename.h>
 #include <wx/dir.h>
+#include "ui.h"
 CommandGetFileLog::CommandGetFileLog(wxEvtHandler * eventHandler, const std::function<void(bool, wxString msg, std::vector<wxString>)>& handler)
 {
 	m_eventHandler = eventHandler;
@@ -406,32 +407,83 @@ bool CommandCompleteDownloadFile::Execute(wxSocketClient * socket)
 	auto CMD_LIST = "COMPLETE GET FILE\n";
 	wxString uid = wxString::Format(wxT("%d\n"), m_uid);
 	auto data = uid.ToUTF8();
-	
+	int sizeLastRead;
+	bool isEnd = false;
+	int step = 0;
+	wxString msg;
+	std::vector<wxString>* resultList = new std::vector<wxString>();
+
 	socket->Write(CMD_LIST, strlen(CMD_LIST));
 	socket->Write(data, data.length());
-	while (true)
+
+	do
 	{
-		wxByte abyte = -1;
-		if (socket->Read(&abyte, 1).GetLastIOReadSize() == 1)
+		int sizeLastRead = 0;
+		BYTE temp[2048];
+		if (socket->IsDisconnected())
 		{
-			if (abyte == '\n')
+			msg = wxT("SERVER IS DISCONNECTED!");
+			break;
+		}
+		socket->WaitForRead(5);
+		sizeLastRead = socket->Read(temp, 2048).GetLastIOReadSize();
+		int lastIndex = 0;
+		for (int i = 0; i < sizeLastRead; i++)
+		{
+			if (temp[i] == '\n')
 			{
-				if (wxString::FromUTF8(memory, memory.GetDataLen()) == wxT("OK"))
+				memory.AppendData(temp + lastIndex, i + 1 - lastIndex);
+				lastIndex = i;
+				switch (step)
 				{
-					memory.Clear();
+				case 0: {
+					wxString ressultCode = wxString::FromUTF8(memory, memory.GetDataLen());
+					if (ressultCode == wxT("OK\n"))
+					{
+						step = 1;
+					}
+					else
+					{
+						isEnd = true;
+						msg = wxT("SERVER DENIED!");
+					}
+				}
+						break;
+				case 1: {
+					wxString listString = wxString::FromUTF8(memory, memory.GetDataLen());
+					listString.Remove(0, listString.Find(wxT("\n")) + 1);
+					int splitIndex = -1;
+					while ((splitIndex = listString.Find(wxT(';'))) != -1)
+					{
+						wxString item = listString.substr(0, splitIndex);
+						resultList->push_back(std::move(item));
+						listString.Remove(0, splitIndex + 1);
+					}
+					isEnd = true;
+					//res = true;
+				}
+						break;
+				}
+				if (isEnd)
+				{
 					break;
 				}
 			}
-			else
-			{
-				memory.AppendByte(abyte);
-			}
 		}
-		else if(socket->IsDisconnected())
+		if (lastIndex == 0)
 		{
-			break;
+			memory.AppendData(temp, sizeLastRead);
 		}
+	} while (isEnd == false);
+
+	if (UI::Instance().mainframe != nullptr)
+	{
+		wxMutexGuiEnter();
+		UI::Instance().mainframe->UpdateLogList(std::move(*resultList));
+		wxMutexGuiLeave();
+		delete resultList;
 	}
+
 	return true;
 }
 
@@ -575,7 +627,6 @@ bool CommandSendFile::Execute(wxSocketClient * socket)
 	int i = 0;
 	while (i < m_files.size())
 	{
-		
 		wxFile file;
 		if (file.Open(m_files[i].GetFullPath()) == false)
 		{
