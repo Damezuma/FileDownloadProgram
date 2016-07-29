@@ -61,8 +61,10 @@ void * ClientFileTransfer::ThreadTransfer::Entry()
 	address.Clear();
 	while (ClientFileTransfer::Instance().m_isEnd == false)
 	{
-		auto & instance = ClientFileTransfer::Instance();
+		
 		ICommand * command = nullptr;
+		auto & instance = ClientFileTransfer::Instance();
+		if (&instance == nullptr)break;
 		if (instance.m_queue.ReceiveTimeout(1000, command) == wxMSGQUEUE_NO_ERROR)
 		{
 			if (socket != nullptr)

@@ -13,4 +13,5 @@ protected:
 	void OnActivateLogPage(wxActivateEvent & event);
 	virtual void OnClickAddFile(wxCommandEvent& event);
 	virtual void OnClickSubmit(wxCommandEvent& event);
+	virtual void OnClickOTP(wxCommandEvent& event);
 };

@@ -47,6 +47,7 @@ bool Application::OnInit()
 }
 int Application::OnExit()
 {
+	
 	delete m_checker;
 	UI::Release();
 	ClientFileTransfer::Release();

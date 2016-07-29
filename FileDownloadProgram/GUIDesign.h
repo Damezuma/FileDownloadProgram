@@ -11,20 +11,21 @@
 #include <wx/artprov.h>
 #include <wx/xrc/xmlres.h>
 #include <wx/string.h>
-#include <wx/stattext.h>
+#include <wx/bitmap.h>
+#include <wx/image.h>
+#include <wx/icon.h>
 #include <wx/gdicmn.h>
+#include <wx/toolbar.h>
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
+#include <wx/stattext.h>
 #include <wx/textctrl.h>
 #include <wx/sizer.h>
 #include <wx/panel.h>
 #include <wx/listbox.h>
 #include <wx/button.h>
 #include <wx/splitter.h>
-#include <wx/bitmap.h>
-#include <wx/image.h>
-#include <wx/icon.h>
 #include <wx/listctrl.h>
 #include <wx/notebook.h>
 #include <wx/frame.h>
@@ -43,6 +44,8 @@ class GUIMainFrame : public wxFrame
 	private:
 	
 	protected:
+		wxToolBar* m_toolBar1;
+		wxToolBarToolBase* ui_toolOTP; 
 		wxNotebook* m_notebook1;
 		wxPanel* m_panel3;
 		wxSplitterWindow* m_splitter2;
@@ -57,6 +60,7 @@ class GUIMainFrame : public wxFrame
 		wxListCtrl* ui_logList;
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void OnClickOTP( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnClickAddFile( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnClickSubmit( wxCommandEvent& event ) { event.Skip(); }
 		

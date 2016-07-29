@@ -5,7 +5,9 @@ class TaskIcon : public wxTaskBarIcon
 {
 public:
 	TaskIcon();
+	~TaskIcon();
 protected:
+	wxTimer * m_timer;
 	virtual wxMenu * CreatePopupMenu();
 	void OnMenuClose(wxCommandEvent & event);
 	void OnMenuShow(wxCommandEvent & event);

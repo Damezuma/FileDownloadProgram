@@ -33,7 +33,6 @@ public:
 			s_instance->m_isEnd = true;
 			delete s_instance;
 		}
-		
 		s_instance = nullptr;
 	}
 	~ClientFileTransfer();

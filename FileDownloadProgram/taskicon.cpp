@@ -17,13 +17,19 @@ END_EVENT_TABLE()
 TaskIcon::TaskIcon() :wxTaskBarIcon()
 {
 	SetIcon(wxICON(WXICON_AAA));
-	wxTimer * timer = new wxTimer(this);
+	m_timer = new wxTimer(this);
 	
-	timer->Start(1000 * 30);
+	m_timer->Start(1000 * 30);
 }
 void TaskIcon::OnTimer(wxTimerEvent & event)
 {
 	ClientFileTransfer::Instance().AddCommand(new CommandGetRemainedFileList());
+}
+TaskIcon::~TaskIcon()
+{
+	m_timer->Stop();
+	delete m_timer;
+	UI::Instance().taskIcon = nullptr;
 }
 wxMenu * TaskIcon::CreatePopupMenu()
 {

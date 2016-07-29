@@ -268,6 +268,7 @@ bool CommandGetFile::Execute(wxSocketClient * socket)
 					} while (remainFileSize > 0);
 					file.Close();
 					isEnd = true;
+
 					ClientFileTransfer::Instance().AddCommand(new CommandCompleteDownloadFile(m_uid));
 				}
 				else

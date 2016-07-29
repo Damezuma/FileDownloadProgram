@@ -117,6 +117,10 @@ void MainFrame::OnClickSubmit(wxCommandEvent & event)
 		virtual void OnFaild(const wxString & reason)
 		{
 			UI::Instance().mainframe->Enable(true);
+			UI::Instance().uploadPrograssDialog->EndModal(0);
+			delete UI::Instance().uploadPrograssDialog;
+			UI::Instance().uploadPrograssDialog = nullptr;
+
 			wxMessageBox(reason);
 		}
 		virtual void OnProgrssTransferFile(int index, int totoalSize, int readSize)
@@ -146,6 +150,7 @@ void MainFrame::OnClickSubmit(wxCommandEvent & event)
 		virtual void OnComplete()
 		{
 			UI::Instance().uploadPrograssDialog->EndModal(0);
+			delete UI::Instance().uploadPrograssDialog;
 			UI::Instance().uploadPrograssDialog = nullptr;
 			UI::Instance().mainframe->Enable(true);
 			wxMessageBox(wxT("성공"));
@@ -156,4 +161,18 @@ void MainFrame::OnClickSubmit(wxCommandEvent & event)
 	Temp a;
 	ClientFileTransfer::Instance().AddCommand(new CommandSendFile(ui_reasonSendFileTextCtrl->GetValue(), m_fileNames, this, &a));
 	UI::Instance().uploadPrograssDialog->ShowModal();
+}
+
+void MainFrame::OnClickOTP(wxCommandEvent & event)
+{
+	ClientFileTransfer::Instance().TryGetOTP(this, [this](bool res, wxString msg)->void {
+		if (res)
+		{
+			wxMessageBox(wxString::Format(wxT("OTP는 %s입니다"), msg), wxT("OTP발급"));
+		}
+		else
+		{
+			wxMessageBox(msg, wxT("Error!"));
+		}
+	});
 }
