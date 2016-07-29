@@ -11,5 +11,6 @@ protected:
 	void OnMenuShow(wxCommandEvent & event);
 	void OnMenuGetOTP(wxCommandEvent & event);
 	void OnDClickIcon(wxTaskBarIconEvent & event);
+	void OnTimer(wxTimerEvent & event);
 DECLARE_EVENT_TABLE();
 };

@@ -35,11 +35,14 @@ bool Application::OnInit()
 	delete dialog;
 	if(m_isLogin == false)
 	{
-		Exit();
+		delete m_checker;
+		dialog = nullptr;
+		UI::Release();
+		ClientFileTransfer::Release();
+		return false;
 	}
-	wxTimer * timer = new wxTimer(this);
-	timer->Connect(wxEVT_TIMER, wxTimerEventHandler(Application::OnTimer), NULL, this);
-	timer->Start(1000 * 60);
+	ClientFileTransfer::Instance().AddCommand(new CommandGetRemainedFileList());
+	
 	return true;
 }
 int Application::OnExit()
@@ -49,9 +52,6 @@ int Application::OnExit()
 	ClientFileTransfer::Release();
 	return 0;
 }
-void Application::OnTimer(wxTimerEvent & event)
-{
-	ClientFileTransfer::Instance().AddCommand(new CommandGetRemainedFileList());
-}
+
 DECLARE_APP(Application)
 IMPLEMENT_APP(Application)

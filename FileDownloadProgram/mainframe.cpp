@@ -82,10 +82,12 @@ void MainFrame::OnClickAddFile(wxCommandEvent & event)
 		dialog.GetPaths(paths);
 		for (wxString & path : paths)
 		{
-			wxFileName* name = new wxFileName(path);
-			ui_listSendFiles->Append(name->GetName() + wxT(".") + name->GetExt(), name);
+			wxFileName name(path);
+			ui_listSendFiles->Append(name.GetName() + wxT(".") + name.GetExt());
+			m_fileNames.push_back(name);
 		}
 	}
+	dialog.Destroy();
 }
 class Listener : public IFileTransferEvent
 {
@@ -104,17 +106,12 @@ public:
 };
 void MainFrame::OnClickSubmit(wxCommandEvent & event)
 {
-	std::vector<wxFileName> list;
-	for (auto i = 0u; i < ui_listSendFiles->GetCount(); i++)
-	{
-		wxFileName * item =(wxFileName*) ui_listSendFiles->GetClientData(i);
-		list.push_back(*item);
-	}
 	UI::Instance().uploadPrograssDialog = new GUIUploadProgressDialog(this);
-	UI::Instance().uploadPrograssDialog->ui_progress1->SetRange(list.size());
+	UI::Instance().uploadPrograssDialog->ui_progress1->SetRange(m_fileNames.size());
 	UI::Instance().uploadPrograssDialog->ui_progress1->SetValue(0);
 	UI::Instance().uploadPrograssDialog->ui_progress2->SetValue(0);
 	this->Enable(false);
+	
 	class Temp : public IFileTransferEvent {
 	public:
 		virtual void OnFaild(const wxString & reason)
@@ -156,6 +153,7 @@ void MainFrame::OnClickSubmit(wxCommandEvent & event)
 	private:
 		
 	};
-	ClientFileTransfer::Instance().AddCommand(new CommandSendFile(ui_reasonSendFileTextCtrl->GetValue(), list, this, new Temp()));
+	Temp a;
+	ClientFileTransfer::Instance().AddCommand(new CommandSendFile(ui_reasonSendFileTextCtrl->GetValue(), m_fileNames, this, &a));
 	UI::Instance().uploadPrograssDialog->ShowModal();
 }

@@ -5,18 +5,26 @@
 #include "app.h"
 #include "ui.h"
 #include "filetransferclient.h"
+#include "client_protocol.h"
 BEGIN_EVENT_TABLE(TaskIcon, wxTaskBarIcon)
 EVT_MENU(wxID_CLOSE, OnMenuClose)
 EVT_MENU(wxID_OPEN, OnMenuShow)
 EVT_MENU(wxID_NEW, OnMenuGetOTP)
+EVT_TIMER(wxID_ANY, OnTimer)
 EVT_TASKBAR_LEFT_DCLICK(OnDClickIcon)
 END_EVENT_TABLE()
 
 TaskIcon::TaskIcon() :wxTaskBarIcon()
 {
 	SetIcon(wxICON(WXICON_AAA));
+	wxTimer * timer = new wxTimer(this);
+	
+	timer->Start(1000 * 30);
 }
-
+void TaskIcon::OnTimer(wxTimerEvent & event)
+{
+	ClientFileTransfer::Instance().AddCommand(new CommandGetRemainedFileList());
+}
 wxMenu * TaskIcon::CreatePopupMenu()
 {
 	wxMenu * menu = new wxMenu();
@@ -31,8 +39,11 @@ wxMenu * TaskIcon::CreatePopupMenu()
 
 void TaskIcon::OnMenuClose(wxCommandEvent & event)
 {
+	if (UI::Instance().mainframe != nullptr)
+	{
+		UI::Instance().mainframe->Close();
+	}
 	this->Destroy();
-	Application::GetInstance()->Exit();
 }
 
 void TaskIcon::OnMenuShow(wxCommandEvent & event)

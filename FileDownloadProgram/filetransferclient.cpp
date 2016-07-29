@@ -5,7 +5,7 @@
 
 #include "client_protocol.h"
 ClientFileTransfer * ClientFileTransfer::s_instance = nullptr;
-const wxString SERVER_IP = wxT("piti.co.kr");
+const TCHAR SERVER_IP[] = wxT("piti.co.kr");
 ClientFileTransfer::ClientFileTransfer()
 {
 	m_threadTransfer = new ThreadTransfer();
@@ -13,11 +13,18 @@ ClientFileTransfer::ClientFileTransfer()
 }
 ClientFileTransfer::~ClientFileTransfer()
 {
+	ICommand * command = nullptr;
+	while (m_queue.ReceiveTimeout(1, command) == wxMSGQUEUE_NO_ERROR)
+	{
+		delete command;
+	}
+	m_queue.Clear();
 	if (m_threadTransfer != nullptr)
 	{
 		if (m_threadTransfer->IsDetached() == false)
 		{
 			m_threadTransfer->Wait();
+			delete m_threadTransfer;
 		}
 	}
 }
@@ -51,6 +58,7 @@ void * ClientFileTransfer::ThreadTransfer::Entry()
 		delete socket;
 		socket = nullptr;
 	}
+	address.Clear();
 	while (ClientFileTransfer::Instance().m_isEnd == false)
 	{
 		auto & instance = ClientFileTransfer::Instance();

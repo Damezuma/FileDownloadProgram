@@ -5,6 +5,7 @@
 #include <wx/filename.h>
 #include <wx/dir.h>
 #include "ui.h"
+#include <thread>
 CommandGetFileLog::CommandGetFileLog(wxEvtHandler * eventHandler, const std::function<void(bool, wxString msg, std::vector<wxString>)>& handler)
 {
 	m_eventHandler = eventHandler;
@@ -340,55 +341,57 @@ bool CommandLogin::Execute(wxSocketClient * socket)
 			auto c = loginCommand.ToUTF8();
 			socket->Write(c, c.length());
 
-			if (socket->IsDisconnected())
+			if (socket->IsDisconnected() == false)
+			{
+				wxMemoryBuffer buf;
+				do
+				{
+					wxByte temp[4] = { 0 };
+					int lastReadCount = socket->Read(temp, 4).GetLastIOReadSize();
+					for (int i = 0; i < lastReadCount; i++)
+					{
+						if (temp[i] == '\n')
+						{
+							lastReadCount = i;
+							buf.AppendData(temp, lastReadCount);
+							goto BREAK_DO_WHILE;
+							break;
+						}
+					}
+					if (lastReadCount != 0)
+					{
+						buf.AppendData(temp, lastReadCount);
+					}
+					else if(socket->IsDisconnected())
+					{
+						break;
+					}
+				} while (true);
+			BREAK_DO_WHILE:
+				if (!socket->IsDisconnected())
+				{
+					wxString msg = wxString::FromUTF8(buf, buf.GetDataLen());
+					if (msg == wxT("SUCCESS USER LOGIN"))
+					{
+						res = true;
+					}
+				}
+				else
+				{
+					msg = wxT("SERVER IS DISCONNECTED!");
+				}
+				
+			}
+			else
 			{
 				msg = wxT("SERVER IS DISCONNECTED!");
 			}
-
-			wxMemoryBuffer buf;
-
-			do
-			{
-				wxByte temp[4] = { 0 };
-				int lastReadCount = socket->Read(temp, 4).GetLastIOReadSize();
-				for (int i = 0; i < lastReadCount; i++)
-				{
-					if (temp[i] == '\n')
-					{
-						lastReadCount = i;
-						buf.AppendData(temp, lastReadCount);
-						goto BREAK_DO_WHILE;
-						break;
-					}
-				}
-				if (lastReadCount != 0)
-				{
-					buf.AppendData(temp, lastReadCount);
-				}
-			} while (true);
-		BREAK_DO_WHILE:
-
-			wxString msg = wxString::FromUTF8(buf, buf.GetDataLen());
-			if (msg == wxT("SUCCESS USER LOGIN"))
-			{
-				res = true;
-			}
 		}
 	}
-	if (res == false)
-	{
-		socket->Close();
-		delete socket;
-	}
-
 	m_eventHandler->CallAfter([this, handler, res, msg] {
 		handler(res, msg);
 	});
 	delete[] m_shaBytes;
-	if (res)
-	{
-		ClientFileTransfer::Instance().AddCommand(new CommandGetRemainedFileList());
-	}
 	return true;
 }
 
@@ -479,7 +482,10 @@ bool CommandCompleteDownloadFile::Execute(wxSocketClient * socket)
 	if (UI::Instance().mainframe != nullptr)
 	{
 		wxMutexGuiEnter();
-		UI::Instance().mainframe->UpdateLogList(std::move(*resultList));
+		if (UI::Instance().mainframe != nullptr)
+		{
+			UI::Instance().mainframe->UpdateLogList(std::move(*resultList));
+		}
 		wxMutexGuiLeave();
 		delete resultList;
 	}
@@ -652,9 +658,55 @@ bool CommandSendFile::Execute(wxSocketClient * socket)
 		}
 			
 		wxByte* outputbuffer = new wxByte[1024 * 1024]; //1메가 단위로 버퍼를 읽는다.
-			
+		auto* receiver = m_handler;
+		auto* eventProcesser = m_eventHandler;
+		std::thread threadGetProgress([i,socket,fileSize, receiver, eventProcesser]() {
+			long sizeServerGet = 0;
+			wxMemoryBuffer memory;
+			wxByte byte;
+			memory.Clear();
+			while (true)
+			{
+				if (socket->Read(&byte, 1).GetLastIOReadSize() != 0)
+				{
+					if (byte == '\n')
+					{
+						wxString msg = wxString::FromUTF8(memory, memory.GetDataLen());
+
+						long sizeNowServerGet = 0;
+						if (msg.ToLong(&sizeNowServerGet, 0))
+						{
+							sizeServerGet += sizeNowServerGet;
+							receiver->OnProgrssTransferFile(i, fileSize, sizeServerGet);
+							if (sizeServerGet == fileSize)
+							{
+								receiver->OnProgrssTransferFile(i, fileSize, sizeServerGet);
+								break;
+							}
+						}
+						else
+						{
+							eventProcesser->CallAfter([receiver]() {
+								receiver->OnFaild(wxT("SERVER DENEID ACCESS!"));
+							});
+							break;
+						}
+						memory.Clear();
+					}
+					memory.AppendByte(byte);
+				}
+				else if (socket->IsDisconnected())
+				{
+					eventProcesser->CallAfter([receiver]() {
+						receiver->OnFaild(wxT("DISCONNECTED!"));
+					});
+					break;
+				}
+			}
+		});
 		do
 		{
+
 			ssize_t readSize = file.Read(outputbuffer, 1024 * 1024);
 			if (readSize > 0)
 			{
@@ -666,47 +718,15 @@ bool CommandSendFile::Execute(wxSocketClient * socket)
 			}
 		} while (file.Eof() == false);
 		file.Close();
-		long sizeServerGet = 0;
-		memory.Clear();
-		ableContinue = false;
-		while (true)
+		if (threadGetProgress.joinable())
 		{
-			if (socket->Read(&byte, 1).GetLastIOReadSize() != 0)
-			{
-				if (byte == '\n')
-				{
-					wxString msg = wxString::FromUTF8(memory, memory.GetDataLen());
-						
-					long sizeNowServerGet = 0;
-					if (msg.ToLong(&sizeNowServerGet, 0))
-					{
-						sizeServerGet += sizeNowServerGet;
-						m_handler->OnProgrssTransferFile(i, fileSize, sizeServerGet);
-						if (sizeServerGet == fileSize)
-						{
-							m_handler->OnProgrssTransferFile(i, fileSize, sizeServerGet);
-							break;
-						}
-					}
-					else
-					{
-						m_eventHandler->CallAfter([handler]() {
-							handler->OnFaild(wxT("SERVER DENEID ACCESS!"));
-						});
-						break;
-					}
-					memory.Clear();
-				}
-				memory.AppendByte(byte);
-			}
-			else if(socket->IsDisconnected())
-			{
-				m_eventHandler->CallAfter([handler]() {
-					handler->OnFaild(wxT("DISCONNECTED!"));
-				});
-				break;
-			}
+			threadGetProgress.join();
 		}
+		else
+		{
+			threadGetProgress.detach();
+		}
+		
 		i++;
 		delete[]outputbuffer;
 	}
